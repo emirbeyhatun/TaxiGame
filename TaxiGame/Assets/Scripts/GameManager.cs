@@ -39,7 +39,6 @@ public class GameManager : MonoBehaviour
     private int spawnedObstacleCount = 0;
     private AudioSource audioSource;
 
-
     void Awake()
     {
         obstacles = new List<GameObject>();

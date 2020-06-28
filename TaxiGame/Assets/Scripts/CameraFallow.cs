@@ -17,6 +17,7 @@ public class CameraFallow : MonoBehaviour
         if(fallowTransform)
         {
             tempFallowPosVec = transform.position;
+            tempFallowPosVec.x = fallowTransform.position.x;
             tempFallowPosVec.z = fallowTransform.position.z;
             tempFallowPosVec.z -= fallowDistance;
             transform.position = tempFallowPosVec;

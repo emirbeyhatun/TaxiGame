@@ -171,4 +171,4 @@ MonoBehaviour:
   colliderType: 2
   isObstacle: 1
   pushForce: 3000
-  fearIncreaseAmount: 0.1
+  fearIncreaseAmount: 0.15

@@ -12,14 +12,13 @@ public class PlayerController : MonoBehaviour
     public float randomYankSpeedRange;//min value is not 0, it is half of max
     public float centerOffset = 2f;
     public float keyCoolDownTime = 0.1f;
-    public float stableWheelCoolDownTime = 0.3f;
     public float fearLevel = 0;
     public float delayForSteeringAtStart = 2;
     public List<Transform> tires;
     public GameObject canvas;
     public GameObject getReadyText;
     public Slider fearSlider;
-    public float stableWheelTimer = 0;
+    public float damageCooldownTime = 2;
     [HideInInspector]
     public bool enableCollision = true;
     public List<AudioClip> screemSoundClips;
@@ -28,6 +27,7 @@ public class PlayerController : MonoBehaviour
     private int direction = 0;
     private int isLastPressedKeyRight = 0; // 1 right, -1 left
     private float keyCoolDownTimer = 0;
+    private float damageCooldownTimer = 0;
     private bool enableMovement = true;
     private bool leftButtonHold = false;
     private bool rightButtonHold = false;
@@ -75,6 +75,13 @@ public class PlayerController : MonoBehaviour
                 tires[i].RotateAround(tires[i].position, transform.right, Time.deltaTime * tireRotateSpeed);
             }
         }
+
+        damageCooldownTimer -= Time.deltaTime;
+        damageCooldownTimer = Mathf.Max(0, damageCooldownTimer);
+        if(damageCooldownTimer <= 0 && fearLevel > 0)
+        {
+            DecreaseFear(0.1f*Time.deltaTime);
+        }
     }
 
     IEnumerator EnableSteering(float secs)
@@ -93,7 +100,9 @@ public class PlayerController : MonoBehaviour
     }
     public void IncreaseFear(float val)
     {
+        damageCooldownTimer = damageCooldownTime;
         fearLevel += val;
+        fearLevel = Mathf.Min(1, fearLevel);
         if(fearLevel >= 1)
         {
             enableMovement = false;
@@ -104,6 +113,7 @@ public class PlayerController : MonoBehaviour
     public void DecreaseFear(float val)
     {
         fearLevel -= val;
+        fearLevel = Mathf.Max(0, fearLevel);
     }
     public void StopMovement()
     {
@@ -120,13 +130,12 @@ public class PlayerController : MonoBehaviour
     {
         keyCoolDownTimer -= Time.deltaTime;
         keyCoolDownTimer = Mathf.Max(0, keyCoolDownTimer);
-        stableWheelTimer -= Time.deltaTime;
-        stableWheelTimer = Mathf.Max(0, stableWheelTimer);
+        
 
         float randomSpeed = Random.Range(randomYankSpeedRange/2, randomYankSpeedRange);
         float offsetFromCenter = transform.position.x;
 
-        if(Input.GetKey(KeyCode.RightArrow) || rightButtonHold == true || Input.acceleration.x > 0.02f)
+        if(Input.GetKey(KeyCode.RightArrow) || rightButtonHold == true)
         {
             if(keyCoolDownTimer <= 0 || (isLastPressedKeyRight == 1 || isLastPressedKeyRight == 0 ))
             {
@@ -136,7 +145,7 @@ public class PlayerController : MonoBehaviour
                 transform.RotateAround(transform.position, transform.up, Time.deltaTime * verticleSpeed);
             }
         }
-        else if(Input.GetKey(KeyCode.LeftArrow) || leftButtonHold == true || Input.acceleration.x < -0.02f)
+        else if(Input.GetKey(KeyCode.LeftArrow) || leftButtonHold == true )
         {
             if(keyCoolDownTimer <= 0 || (isLastPressedKeyRight == -1 || isLastPressedKeyRight == 0 ))
             {
@@ -146,13 +155,16 @@ public class PlayerController : MonoBehaviour
                 transform.RotateAround(transform.position, transform.up, Time.deltaTime * -verticleSpeed);
             }
         }
-        else if(stableWheelTimer <= 0)
+        else
         {
             if(Mathf.Abs(offsetFromCenter) <= centerOffset)
             {
+                float randomDirection2 = 0;
                 if(isCenterDirectionSelected == false)
                 {
-                    float randomDirection = Random.value;
+                    Random.InitState(System.DateTime.Now.Millisecond);
+                    float randomDirection = Random.Range(0,1f);
+                    randomDirection2 = randomDirection;
                     if(randomDirection > 0.5f)
                     {
                         direction = 1;
@@ -189,10 +201,7 @@ public class PlayerController : MonoBehaviour
     {
         return playerRigidbody;
     }
-    public void StartStableWheel()
-    {
-        stableWheelTimer = stableWheelCoolDownTime;
-    }
+    
 
     public void LeftButtonOnClick()
     {

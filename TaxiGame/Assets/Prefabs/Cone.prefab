@@ -78,6 +78,7 @@ MonoBehaviour:
   colliderType: 2
   isObstacle: 1
   pushForce: 3000
+  fearIncreaseAmount: 0.25
 --- !u!1 &8701786057942194450
 GameObject:
   m_ObjectHideFlags: 0

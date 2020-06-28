@@ -203,6 +203,8 @@ ScriptsOnlyBuild:
       Script: {instanceID: 0}
     - Class: 128
       Script: {instanceID: 0}
+    - Class: 136
+      Script: {instanceID: 0}
     - Class: 157
       Script: {instanceID: 0}
     - Class: 196
@@ -560,7 +562,7 @@ ScriptsOnlyBuild:
     className: FilmGrain
   - hash:
       serializedVersion: 2
-      Hash: 644d224ccdd0763f6c85dfc4c169024c
+      Hash: b3189502aa32ca789524cf4232182a45
     assemblyName: Assembly-CSharp.dll
     namespaceName: 
     className: PlayerController
