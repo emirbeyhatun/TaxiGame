@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class PlayerController : MonoBehaviour
 {
@@ -12,23 +13,55 @@ public class PlayerController : MonoBehaviour
     public float centerOffset = 2f;
     public float keyCoolDownTime = 0.1f;
     public float stableWheelCoolDownTime = 0.3f;
+    public float fearLevel = 0;
+    public float delayForSteeringAtStart = 2;
     public List<Transform> tires;
+    public GameObject canvas;
+    public GameObject getReadyText;
+    public Slider fearSlider;
+    public float stableWheelTimer = 0;
+    [HideInInspector]
+    public bool enableCollision = true;
+    public List<AudioClip> screemSoundClips;
     Rigidbody playerRigidbody;
     bool isCenterDirectionSelected = false;
     int direction = 0;
     int isLastPressedKeyRight = 0; // 1 right, -1 left
     float keyCoolDownTimer = 0;
-    public float stableWheelTimer = 0;
     bool enableMovement = true;
+    bool leftButtonHold = false;
+    bool rightButtonHold = false;
+    bool startSteering = false;
+    AudioSource audioSource;
+
+    Matrix4x4 baseMatrix = Matrix4x4.identity;
+     public Vector3 AdjustedAccelerometer {
+        get {
+            return this.baseMatrix.MultiplyVector(Input.acceleration);
+        }
+    }
+
     void Awake()
     {
         playerRigidbody = GetComponent<Rigidbody>();
-        
+        audioSource = GetComponent<AudioSource>();
+    }
+
+    void Start()
+    {
+        enableCollision = false;
+        IEnumerator coroutine = EnableSteering(delayForSteeringAtStart);
+        StartCoroutine(coroutine);
     }
 
     // Update is called once per frame
     void Update()
     {
+        if(canvas)
+        {
+            canvas.transform.LookAt(Camera.main.transform);
+            fearSlider.value = fearLevel;
+        }
         if(enableMovement == true)
         {
             if(playerRigidbody)
@@ -36,14 +69,58 @@ public class PlayerController : MonoBehaviour
                 playerRigidbody.velocity = transform.forward*forwardSpeed;
             }
             
-            SteerWheel();
+            if(startSteering == true)
+            {
+                SteerWheel();
+            }
+        }
+
+        if(playerRigidbody.velocity.magnitude > 0)
+        {
+            for (int i = 0; i < tires.Count; i++)
+            {
+                tires[i].RotateAround(tires[i].position, transform.right, Time.deltaTime * tireRotateSpeed);
+            }
         }
     }
 
+    IEnumerator EnableSteering(float secs)
+    {
+        if(getReadyText != null)
+        {
+            getReadyText.SetActive(true);
+        }
+        yield return new WaitForSeconds(secs);
+        enableCollision = true;
+        startSteering = true;
+        if(getReadyText != null)
+        {
+            getReadyText.SetActive(false);
+        }
+    }
+    public void IncreaseFear(float val)
+    {
+        fearLevel += val;
+        if(fearLevel >= 1)
+        {
+            enableMovement = false;
+            StopAfterSecs(2, false);
+            GameManager.Instance.GameOverMenu.SetActive(true);
+        }
+    }
+    public void DecreaseFear(float val)
+    {
+        fearLevel -= val;
+    }
     public void StopMovement()
     {
         enableMovement = false;
         playerRigidbody.velocity = Vector3.zero;
+    }
+    public void PlayScreamSound()
+    {
+        audioSource.clip = screemSoundClips[Random.Range(0, screemSoundClips.Count)];
+        audioSource.Play();
     }
     void SteerWheel()
     {
@@ -55,7 +132,7 @@ public class PlayerController : MonoBehaviour
         float randomSpeed = Random.Range(randomYankSpeedRange/2, randomYankSpeedRange);
         float offsetFromCenter = transform.position.x;
 
-        if(Input.GetKey(KeyCode.RightArrow))
+        if(Input.GetKey(KeyCode.RightArrow) || rightButtonHold == true || Input.acceleration.x > 0.02f)
         {
             if(keyCoolDownTimer <= 0 || (isLastPressedKeyRight == 1 || isLastPressedKeyRight == 0 ))
             {
@@ -65,7 +142,7 @@ public class PlayerController : MonoBehaviour
                 transform.RotateAround(transform.position, transform.up, Time.deltaTime * verticleSpeed);
             }
         }
-        else if(Input.GetKey(KeyCode.LeftArrow))
+        else if(Input.GetKey(KeyCode.LeftArrow) || leftButtonHold == true || Input.acceleration.x < -0.02f)
         {
             if(keyCoolDownTimer <= 0 || (isLastPressedKeyRight == -1 || isLastPressedKeyRight == 0 ))
             {
@@ -112,11 +189,6 @@ public class PlayerController : MonoBehaviour
                 }
             }
         }
-
-        for (int i = 0; i < tires.Count; i++)
-        {
-            tires[i].RotateAround(tires[i].position, transform.right, Time.deltaTime * tireRotateSpeed);
-        }
     }
 
     public Rigidbody GetRigidBody()
@@ -126,5 +198,80 @@ public class PlayerController : MonoBehaviour
     public void StartStableWheel()
     {
         stableWheelTimer = stableWheelCoolDownTime;
+    }
+
+    public void LeftButtonOnClick()
+    {
+        leftButtonHold = true;
+    }
+    public void LeftButtonOnRelease()
+    {
+        leftButtonHold = false;
+    }
+
+    public void RightButtonOnClick()
+    {
+        rightButtonHold = true;
+    }
+    public void RightButtonOnRelease()
+    {
+        rightButtonHold = false;
+    }
+
+    public void StopAfterSecs(float seconds, bool isWin)
+    {
+        IEnumerator coroutine = HaltAfterSeconds(seconds, isWin);
+        StartCoroutine(coroutine);
+    }
+
+    IEnumerator HaltAfterSeconds(float seconds, bool isWin)
+    {
+        float startVelocityX = 0;
+        float startVelocityY = 0;
+        float startVelocityZ = 0;
+        yield return new WaitForSeconds(seconds/4);
+
+        startVelocityX = playerRigidbody.velocity.x;
+        startVelocityY = playerRigidbody.velocity.y;
+        startVelocityZ = playerRigidbody.velocity.z;
+
+        float decreasedVelocityX = ((startVelocityX)*(3))/4;
+        float decreasedVelocityY = ((startVelocityY)*(3))/4;
+        float decreasedVelocityZ = ((startVelocityZ)*(3))/4;
+
+        playerRigidbody.velocity = new Vector3(decreasedVelocityX, decreasedVelocityY, decreasedVelocityZ);
+
+        yield return new WaitForSeconds(seconds/4);
+        startVelocityX = playerRigidbody.velocity.x;
+        startVelocityY = playerRigidbody.velocity.y;
+        startVelocityZ = playerRigidbody.velocity.z;
+        decreasedVelocityX = ((startVelocityX)*(2))/4;
+        decreasedVelocityY = ((startVelocityY)*(2))/4;
+        decreasedVelocityZ = ((startVelocityZ)*(2))/4;
+
+        playerRigidbody.velocity = new Vector3(decreasedVelocityX, decreasedVelocityY, decreasedVelocityZ);
+
+        yield return new WaitForSeconds(seconds/4);
+        startVelocityX = playerRigidbody.velocity.x;
+        startVelocityY = playerRigidbody.velocity.y;
+        startVelocityZ = playerRigidbody.velocity.z;
+        decreasedVelocityX = ((startVelocityX)*(1))/4;
+        decreasedVelocityY = ((startVelocityY)*(1))/4;
+        decreasedVelocityZ = ((startVelocityZ)*(1))/4;
+
+        playerRigidbody.velocity = new Vector3(decreasedVelocityX, decreasedVelocityY, decreasedVelocityZ);
+
+        yield return new WaitForSeconds(seconds/4);
+        playerRigidbody.velocity = Vector3.zero;
+
+        if(isWin == false && GameManager.Instance.isFinished == false)
+        {
+            GameManager.Instance.OpenGameOverMenu();
+        }
+        else
+        {
+            GameManager.Instance.OpenLevelFinishedMenu();
+        }
+
     }
 }

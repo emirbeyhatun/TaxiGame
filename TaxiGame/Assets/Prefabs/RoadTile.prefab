@@ -149,7 +149,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
+  - {fileID: 2100000, guid: a275a7855f0e3dc4c94cea8ee2e60e83, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -195,6 +195,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1bc6ded3caaff1b49ad0f6a31a15a4c1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  colliderType: 0
+  isObstacle: 0
+  pushForce: 100
 --- !u!1 &8039885152841954294
 GameObject:
   m_ObjectHideFlags: 0
@@ -327,7 +330,7 @@ BoxCollider:
   m_Enabled: 1
   serializedVersion: 2
   m_Size: {x: 9.85, y: 0.116601944, z: 40.1}
-  m_Center: {x: 0, y: -0.05, z: -1.58}
+  m_Center: {x: 0, y: -0.08, z: -1.58}
 --- !u!1 &8039885153292169176
 GameObject:
   m_ObjectHideFlags: 0
@@ -942,7 +945,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
+  - {fileID: 2100000, guid: a275a7855f0e3dc4c94cea8ee2e60e83, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -988,3 +991,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1bc6ded3caaff1b49ad0f6a31a15a4c1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  colliderType: 0
+  isObstacle: 0
+  pushForce: 100
